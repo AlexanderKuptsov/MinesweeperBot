@@ -67,24 +67,6 @@ public class GUI {
         glClearColor(1, 1, 1, 1);
     }
 
-    public static List<Cell> getNeighbours(int x, int y) {
-        int cell_x = x / CELL_SIZE;
-        int cell_y = y / CELL_SIZE;
-        List<Cell> localNeighbours = new ArrayList<Cell>();
-
-        for (int i = cell_x - 1; i <= cell_x + 1; i++)
-            for (int k = cell_y - 1; k <= cell_y + 1; k++) {
-                try {
-                    Cell localCell = cells[i][k];
-                    if (localCell.isHidden() && !(i == cell_x && k == cell_y))
-                        localNeighbours.add(localCell);
-                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                    //ignore
-                }
-            }
-        return localNeighbours;
-    }
-
     public static void receiveClick(int x, int y, int button) {
         int cell_x = x / CELL_SIZE;
         int cell_y = y / CELL_SIZE;

@@ -7,6 +7,7 @@ import static Graphics.GUI.CELLS_COUNT_Y;
 import static Graphics.GUI.CELL_SIZE;
 
 public class Generator {
+    private static final int DIFFICULTY = 15;
 
     public static Cell[][] generate() {
         {
@@ -20,7 +21,7 @@ public class Generator {
 
             for (int x = 0; x < CELLS_COUNT_X; x++) {
                 for (int y = 0; y < CELLS_COUNT_Y; y++) {
-                    boolean isMine = rnd.nextInt(100) < 15;
+                    boolean isMine = rnd.nextInt(100) < DIFFICULTY;
 
                     if (isMine) {
                         map[x][y] = new Cell(x * CELL_SIZE, y * CELL_SIZE, -1);

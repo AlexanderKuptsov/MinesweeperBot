@@ -4,8 +4,10 @@ import Graphics.GUI;
 import Graphics.GUIElement;
 import Graphics.Sprite;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static Graphics.GUI.CELL_SIZE;
-import static Graphics.GUI.getCells;
 import static Graphics.Sprite.spriteByNumber;
 
 
@@ -23,6 +25,67 @@ public class Cell implements GUIElement {
         this.isMarked = false;
         this.isHidden = true;
         this.useless = false;
+    }
+
+    public List<Cell> getNeighbours() {
+        int cell_x = x / CELL_SIZE;
+        int cell_y = y / CELL_SIZE;
+        List<Cell> localNeighbours = new ArrayList<Cell>();
+
+        for (int i = cell_x - 1; i <= cell_x + 1; i++)
+            for (int k = cell_y - 1; k <= cell_y + 1; k++) {
+                try {
+                    Cell localCell = GUI.getCells()[i][k];
+                    if (localCell.isHidden() && !(i == cell_x && k == cell_y))
+                        localNeighbours.add(localCell);
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                    //ignore
+                }
+            }
+        return localNeighbours;
+    }
+
+    public List<Cell> getNotMarkedNeighbours() {
+        int cell_x = x / CELL_SIZE;
+        int cell_y = y / CELL_SIZE;
+        List<Cell> localNeighbours = new ArrayList<Cell>();
+
+        for (int i = cell_x - 1; i <= cell_x + 1; i++)
+            for (int k = cell_y - 1; k <= cell_y + 1; k++) {
+                try {
+                    Cell localCell = GUI.getCells()[i][k];
+                    if (localCell.isHidden() && !localCell.isMarked() && !(i == cell_x && k == cell_y))
+                        localNeighbours.add(localCell);
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                    //ignore
+                }
+            }
+        return localNeighbours;
+    }
+
+    public List<Cell> getOpenNeighbours() {
+        int cell_x = x / CELL_SIZE;
+        int cell_y = y / CELL_SIZE;
+        List<Cell> localNeighbours = new ArrayList<Cell>();
+
+        for (int i = cell_x - 1; i <= cell_x + 1; i++)
+            for (int k = cell_y - 1; k <= cell_y + 1; k++) {
+                try {
+                    Cell localCell = GUI.getCells()[i][k];
+                    if (!localCell.isHidden() && !localCell.isMarked() && !(i == cell_x && k == cell_y))
+                        localNeighbours.add(localCell);
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                    //ignore
+                }
+            }
+        return localNeighbours;
+    }
+
+    public int getCurrentState() {
+        int currentState = state;
+        List<Cell> neighbours = getNeighbours();
+        for (Cell cell : neighbours) if (cell.isMarked) currentState--;
+        return currentState;
     }
 
     @Override
@@ -88,6 +151,32 @@ public class Cell implements GUIElement {
 
     public void removeFromGlobalCells() {
         GUI.getCells()[getXPosition()][getYPosition()] = null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Cell cell = (Cell) o;
+
+        if (x != cell.x) return false;
+        if (y != cell.y) return false;
+        if (state != cell.state) return false;
+        if (isMarked != cell.isMarked) return false;
+        if (isHidden != cell.isHidden) return false;
+        return useless == cell.useless;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = x;
+        result = 31 * result + y;
+        result = 31 * result + state;
+        result = 31 * result + (isMarked ? 1 : 0);
+        result = 31 * result + (isHidden ? 1 : 0);
+        result = 31 * result + (useless ? 1 : 0);
+        return result;
     }
 
     @Override
