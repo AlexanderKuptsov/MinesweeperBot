@@ -76,6 +76,7 @@ public class BotUseless {
                             cell.receiveClick(BUTTON_SET_FLAG);
                             System.out.println("Bot: set safe flag");
                             noWay = false;
+                            stop = true;
                         }
                 }
             } else {
@@ -86,6 +87,7 @@ public class BotUseless {
                                 cell.receiveClick(BUTTON_SET_FLAG);
                                 System.out.println("Bot: set safe flag");
                                 noWay = false;
+                                stop = true;
                             }
                     }
                 }
@@ -93,15 +95,58 @@ public class BotUseless {
         }
     }
 
+    private void bestEverProbability() {
+        float minAcceptableProbability = 0.275f;
+        float minProbability = 1.0f;
+        Cell bestCell = null;
+        for (Cell[] line : cells) {
+            for (Cell cell : line) {
+                if (cell.isHidden() && !cell.isMarked()) {
+                    float localProbability = 0;
+                    List<Cell> neighbours = cell.getOpenNeighbours();
+                    for (Cell localCell : neighbours) {
+                        List<Cell> localList = localCell.getNotMarkedNeighbours();
+                        float state = localCell.getCurrentState();
+                        if (localList.size() > 1 && localList.size() > state && state != 0) {
+                            localProbability += state / localList.size();
+                        }
+                    }
+                    if (localProbability < minProbability && localProbability != 0) {
+                        minProbability = localProbability;
+                        bestCell = cell;
+                    }
+                }
+            }
+        }
+        if (bestCell != null && minProbability <= minAcceptableProbability) {
+            GUI.receiveClick(bestCell.getX(), bestCell.getY(), BUTTON_OPEN);
+            noWay = false;
+            timeBetweenMoves = WAIT_TIME;
+            System.out.println("Bot: Best Probability (" + minProbability + ") Luck Shot [" +
+                    bestCell.getXPosition() + "][" + bestCell.getYPosition() + "]");
+        }
+    }
+
     private void firstLuckShot() {
-        System.out.println("Bot: First Luck Shot");
         Random rnd = new Random();
         int x = rnd.nextInt(2);
         int y = rnd.nextInt(2);
-        if (x == 1) x = CELLS_COUNT_X - 1;                                    ////////////
+        if (x == 1) x = CELLS_COUNT_X - 1;
         if (y == 1) y = CELLS_COUNT_Y - 1;
-        GUI.receiveClick(x * CELL_SIZE, y * CELL_SIZE, BUTTON_OPEN);
-        timeBetweenMoves = WAIT_TIME;
+        Cell newCell = GUI.getCells()[x][y];
+
+        if (GUI.getCells()[0][0].isHidden() ||
+                GUI.getCells()[0][CELLS_COUNT_Y - 1].isHidden() ||
+                GUI.getCells()[CELLS_COUNT_X - 1][0].isHidden() ||
+                GUI.getCells()[CELLS_COUNT_X - 1][CELLS_COUNT_Y - 1].isHidden()) {
+
+            if (newCell.isHidden()) {
+                GUI.receiveClick(x * CELL_SIZE, y * CELL_SIZE, BUTTON_OPEN);
+                timeBetweenMoves = WAIT_TIME;
+                System.out.println("Bot: Best possible first Luck Shot");
+                if (newCell.getState() == 1 || newCell.getState() == 2) firstLuckShot();
+            } else firstLuckShot();
+        }
     }
 
     private void luckShot() {
@@ -110,7 +155,7 @@ public class BotUseless {
         int y = rnd.nextInt(SCREEN_HEIGHT);
         Cell localCell = GUI.getCells()[x / CELL_SIZE][y / CELL_SIZE];
         if (!localCell.isMarked() && localCell.isHidden()) {
-            System.out.println("Bot: Luck Shot");
+            System.out.println("Bot: Luck Ыhot");
             GUI.receiveClick(x, y, BUTTON_OPEN);
             timeBetweenMoves = WAIT_TIME;
         }
@@ -122,7 +167,6 @@ public class BotUseless {
                 firstLuckShot();
                 firstStep = false;
             }
-
             if (timeBetweenMoves >= 0) {
                 timeBetweenMoves -= Clock.INSTANCE.getDelta();
             } else {
@@ -149,6 +193,7 @@ public class BotUseless {
                     }
                     if (stop) break;
                 }
+                if (noWay) bestEverProbability();
                 if (noWay) {
                     if (!solved) luckShot();
                     else GUI.gameover();
@@ -163,5 +208,9 @@ public class BotUseless {
 
     public void setWorking(boolean working) {
         this.working = working;
+    }
+
+    public void setStop(boolean stop) {
+        this.stop = stop;
     }
 }

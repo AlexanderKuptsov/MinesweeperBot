@@ -33,6 +33,9 @@ public enum Game {
                     end_of_game = true;
                     botUseless.setWorking(false);
                 }
+                if (Keyboard.getEventKey() == Keyboard.KEY_G) {
+                    botUseless.setWorking(!botUseless.isWorking());
+                }
             }
         }
 
@@ -42,11 +45,9 @@ public enum Game {
 
 
     public void update() {
-            input();
-
-            GUI.draw();
-
-            botUseless.update();
+        input();
+        GUI.draw();
+        botUseless.update();
     }
 
     public boolean isEnd_of_game() {

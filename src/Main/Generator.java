@@ -22,8 +22,9 @@ public class Generator {
             for (int x = 0; x < CELLS_COUNT_X; x++) {
                 for (int y = 0; y < CELLS_COUNT_Y; y++) {
                     boolean isMine = rnd.nextInt(100) < DIFFICULTY;
+                    boolean isCorner = ((x == 0 || x == CELLS_COUNT_X - 1) && (y == 0 || y == CELLS_COUNT_Y - 1));
 
-                    if (isMine) {
+                    if (isMine && !isCorner) {
                         map[x][y] = new Cell(x * CELL_SIZE, y * CELL_SIZE, -1);
 
                         for (int i = -1; i < 2; i++) {

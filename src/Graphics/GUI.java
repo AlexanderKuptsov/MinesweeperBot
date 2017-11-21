@@ -23,7 +23,7 @@ public class GUI {
     public static final int CELL_SIZE = 48;
     public static final int SCREEN_WIDTH = CELLS_COUNT_X * CELL_SIZE;
     public static final int SCREEN_HEIGHT = CELLS_COUNT_Y * CELL_SIZE;
-    public static final String NAME = "Unpredictable Mines";
+    private static final String NAME = "Unpredictable Mines";
 
     public static void init() {
         initializeOpenGL();
@@ -125,6 +125,7 @@ public class GUI {
     public static void gameover() {
         Game.INSTANCE.setEnd_of_game(true);
         Game.INSTANCE.getBotUseless().setWorking(false);
+        Game.INSTANCE.getBotUseless().setStop(true);
         for (Cell[] line : cells) {
             for (Cell cell : line) {
                 cell.show();
@@ -159,15 +160,6 @@ public class GUI {
         glTexCoord2f(0, 1);
         glVertex2f(elem.getX(), elem.getY());
         glEnd();
-    }
-
-    public static void update() {
-        updateOpenGL();
-    }
-
-    private static void updateOpenGL() {
-        Display.update();
-        Display.sync(60);
     }
 
     public static Cell[][] getCells() {
