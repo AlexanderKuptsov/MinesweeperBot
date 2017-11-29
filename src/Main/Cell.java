@@ -64,8 +64,8 @@ public class Cell implements GUIElement {
     }
 
     public List<Cell> getOpenNeighbours() {
-        int cell_x = x / CELL_SIZE;
-        int cell_y = y / CELL_SIZE;
+        int cell_x = getXPosition();
+        int cell_y = getYPosition();
         List<Cell> localNeighbours = new ArrayList<Cell>();
 
         for (int i = cell_x - 1; i <= cell_x + 1; i++)

@@ -7,27 +7,23 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.lwjgl.opengl.GL11.*;
 
 public class GUI {
 
     private static Cell[][] cells;
-
-
+    // 15/15/48/15
     public static final int CELLS_COUNT_X = 15;
     public static final int CELLS_COUNT_Y = 15;
     public static final int CELL_SIZE = 48;
+    private static final int DIFFICULTY = 15;
     public static final int SCREEN_WIDTH = CELLS_COUNT_X * CELL_SIZE;
     public static final int SCREEN_HEIGHT = CELLS_COUNT_Y * CELL_SIZE;
     private static final String NAME = "Unpredictable Mines";
 
     public static void init() {
         initializeOpenGL();
-        cells = Generator.generate();
+        cells = Generator.INSTANCE.generate();
     }
 
     private static void initializeOpenGL() {
@@ -164,5 +160,13 @@ public class GUI {
 
     public static Cell[][] getCells() {
         return cells;
+    }
+
+    public static void setCells(Cell[][] cells) {
+        GUI.cells = cells;
+    }
+
+    public static int getDIFFICULTY() {
+        return DIFFICULTY;
     }
 }
