@@ -1,94 +1,78 @@
 package AI;
 
-import Graphics.GUI;
 import Main.Cell;
-import Main.Clock;
 
-import java.util.List;
-import java.util.Random;
-
-import static Graphics.GUI.*;
+import java.util.*;
 
 public class BotUseless {
 
     private boolean working, firstStep;
-    private float timeBetweenMoves;
-    private boolean stop, noWay, solved;
+    private int cellsCountX, cellsCountY;
+    private boolean noWay, solved;
     private Cell[][] cells;
-
-    private static final int BUTTON_OPEN = 0;
-    private static final int BUTTON_SET_FLAG = 1;
-    private static final float WAIT_TIME = 0.0175f;
+    private Set<Cell> cellsToOpen;
+    private Set<Cell> cellsToMark;
 
     public BotUseless(Cell[][] cells) {
         this.working = true;
         this.firstStep = true;
-        this.timeBetweenMoves = WAIT_TIME;
-        this.stop = false;
+        this.cellsCountX = cells.length;
+        this.cellsCountY = cells[0].length;
         this.noWay = true;
         this.solved = false;
         this.cells = cells;
+        this.cellsToOpen = new HashSet<Cell>();
+        this.cellsToMark = new HashSet<Cell>();
     }
 
-    public void ezOpen(Cell mainCell) {
-        List<Cell> localNeighbours = mainCell.getNotMarkedNeighbours();
+    void ezOpen(Cell mainCell) {
+        List<Cell> localNeighbours = getNotMarkedNeighbours(mainCell);
         if (localNeighbours.size() > 0) {
-            int localState = mainCell.getCurrentState();
+            int localState = getCurrentState(mainCell);
 
             // кол-во неоткрытых клеток равно кол-ву мин || кол-во неоткрытых клеток и кол-во флагов равно кол-ву мин
             if (localState == localNeighbours.size()) {
                 System.out.println("Bot: ez flag");
-                timeBetweenMoves = WAIT_TIME;
                 noWay = false;
-                stop = true;
-                for (Cell cell : localNeighbours) {
-                    // GUI.receiveClick(cell.getX(), cell.getY(), BUTTON_SET_FLAG);
-                    cell.receiveClick(BUTTON_SET_FLAG);
-                }
+                cellsToMark.addAll(localNeighbours);
             }
 
             // все мины отмечены флагами, значит нужно открыть оставшиеся клетки
             if (localState == 0) {
                 System.out.println("Bot: ez open");
-                timeBetweenMoves = WAIT_TIME;
                 noWay = false;
-                stop = true;
-                for (Cell cell : localNeighbours) {
-                    GUI.receiveClick(cell.getX(), cell.getY(), BUTTON_OPEN);
-                }
+                cellsToOpen.addAll(localNeighbours);
             }
         }
     }
 
-    private void findSafeCells(Cell mainCell) {
-        List<Cell> localOpenNeighbours = mainCell.getOpenNeighbours();
-        List<Cell> localNeighbours = mainCell.getNeighbours();
-        int mainCellState = mainCell.getCurrentState();
+    void findSafeCells(Cell mainCell) {
+        List<Cell> localOpenNeighbours = getOpenNeighbours(mainCell);
+        List<Cell> localNeighbours = getNeighbours(mainCell);
+        int mainCellState = getCurrentState(mainCell);
 
         for (Cell localCell : localOpenNeighbours) {
-            List<Cell> neighbourList = localCell.getNeighbours();
+            List<Cell> neighbourList = getNeighbours(localCell);
             int deltaSize = Math.abs(neighbourList.size() - localNeighbours.size());
-            int deltaState = Math.abs(localCell.getCurrentState() - mainCellState);
+            int deltaState = Math.abs(getCurrentState(localCell) - mainCellState);
 
             if (deltaState == deltaSize || deltaState == 0) { // поиск клеток, где точно есть бомба/нет бомбы
                 if (neighbourList.containsAll(localNeighbours)) {
-                    int btn = deltaState != 0 ? BUTTON_SET_FLAG : BUTTON_OPEN;
                     for (Cell cell : neighbourList)
                         if (!cell.isMarked() && !localNeighbours.contains(cell)) {
                             System.out.println("Bot: make safe move ");
-                            GUI.receiveClick(cell.getX(), cell.getY(), btn);
+                            if (deltaState == 0) cellsToOpen.add(cell);
+                            else if (!cell.isMarked()) cellsToMark.add(cell);
                             noWay = false;
-                            stop = true;
                         }
                 } else {
                     if (localNeighbours.containsAll(neighbourList)) {
-                        int btn = deltaState != 0 ? BUTTON_SET_FLAG : BUTTON_OPEN;
                         for (Cell cell : localNeighbours)
                             if (!cell.isMarked() && !neighbourList.contains(cell)) {
-                                // System.out.println("Bot: make safe move ");
-                                GUI.receiveClick(cell.getX(), cell.getY(), btn);
+                                System.out.println("Bot: make safe move ");
+                                if (deltaState == 0) cellsToOpen.add(cell);
+                                else cellsToMark.add(cell);
                                 noWay = false;
-                                stop = true;
                             }
                     }
                 }
@@ -96,21 +80,22 @@ public class BotUseless {
         }
     }
 
-    private void fantomMove(Cell mainCell) {
-        List<Cell> localOpenNeighbours = mainCell.getOpenNeighbours();
+    void phantomMove(Cell mainCell) {
+        List<Cell> localOpenNeighbours = getOpenNeighbours(mainCell);
         if (localOpenNeighbours.size() > 1) {
-            GUI.receiveClick(mainCell.getX(), mainCell.getY(), BUTTON_SET_FLAG);
+            mainCell.setMarked(true);
             boolean check = true;
             for (Cell localCell : localOpenNeighbours) {
-                if (localCell.getCurrentState() != 0) {
+                if (getCurrentState(localCell) != 0) {
                     check = false;
                     break;
                 } else {
-                    List<Cell> localHiddenNeighbours = mainCell.getNotMarkedNeighbours();
+                    List<Cell> localHiddenNeighbours = getNotMarkedNeighbours(mainCell);
                     for (Cell localHiddenCell : localHiddenNeighbours) {
-                        List<Cell> newLocalOpenNeighbours = localHiddenCell.getOpenNeighbours();
+                        List<Cell> newLocalOpenNeighbours = getOpenNeighbours(localHiddenCell);
                         for (Cell newLocalCell : newLocalOpenNeighbours) {
-                            if (newLocalCell.getCurrentState() != 0) {
+                            if (getCurrentState(newLocalCell) != 0 ||
+                                    getNotMarkedNeighbours(newLocalCell) == localHiddenNeighbours) {
                                 check = false;
                                 break;
                             }
@@ -118,17 +103,17 @@ public class BotUseless {
                     }
                 }
             }
-            if (!check) {
-                GUI.receiveClick(mainCell.getX(), mainCell.getY(), BUTTON_SET_FLAG);
-            } else {
+            mainCell.setMarked(false);
+            if (check) {
                 System.out.println("Bot: Best possible flag at [" +
                         mainCell.getXPosition() + "][" + mainCell.getYPosition() + "]");
+                cellsToMark.add(mainCell);
                 noWay = false;
             }
         }
     }
 
-    private void bestEverProbability() {
+    void bestEverProbability() {
         float minAcceptableProbability = 0.275f;
         float minProbability = 1.0f;
         float maxProbability = 0f;
@@ -138,13 +123,11 @@ public class BotUseless {
             for (Cell cell : line) {
                 if (cell.isHidden() && !cell.isMarked()) {
 
-                    fantomMove(cell);
-
                     float localProbability = 0;
-                    List<Cell> neighbours = cell.getOpenNeighbours();
+                    List<Cell> neighbours = getOpenNeighbours(cell);
                     for (Cell localCell : neighbours) {
-                        List<Cell> localList = localCell.getNotMarkedNeighbours();
-                        float state = localCell.getCurrentState();
+                        List<Cell> localList = getNotMarkedNeighbours(localCell);
+                        float state = getCurrentState(localCell);
                         if (localList.size() > 1 && localList.size() > state && state != 0) {
                             localProbability += state / localList.size();
                         }
@@ -160,48 +143,47 @@ public class BotUseless {
                 }
             }
         }
-        if (maxProbabilityCell != null && maxProbability >= minAcceptableProbability) fantomMove(maxProbabilityCell);
+        if (maxProbabilityCell != null && maxProbability >= minAcceptableProbability) phantomMove(maxProbabilityCell);
 
         if (minProbabilityCell != null && minProbability <= minAcceptableProbability && noWay) {
             System.out.println("Bot: Best Probability (" + minProbability + ") Luck Shot [" +
                     minProbabilityCell.getXPosition() + "][" + minProbabilityCell.getYPosition() + "]");
-            GUI.receiveClick(minProbabilityCell.getX(), minProbabilityCell.getY(), BUTTON_OPEN);
+            cellsToOpen.add(minProbabilityCell);
             noWay = false;
-            timeBetweenMoves = WAIT_TIME;
         }
     }
 
-    private void firstLuckShot() {
-        Random rnd = new Random();
-        int x = rnd.nextInt(2);
-        int y = rnd.nextInt(2);
-        if (x == 1) x = CELLS_COUNT_X - 1;
-        if (y == 1) y = CELLS_COUNT_Y - 1;
-        Cell newCell = GUI.getCells()[x][y];
-
-        if (GUI.getCells()[0][0].isHidden() ||
-                GUI.getCells()[0][CELLS_COUNT_Y - 1].isHidden() ||
-                GUI.getCells()[CELLS_COUNT_X - 1][0].isHidden() ||
-                GUI.getCells()[CELLS_COUNT_X - 1][CELLS_COUNT_Y - 1].isHidden()) {
-
-            if (newCell.isHidden()) {
-                System.out.println("Bot: Best possible first Luck Shot");
-                GUI.receiveClick(x * CELL_SIZE, y * CELL_SIZE, BUTTON_OPEN);
-                timeBetweenMoves = WAIT_TIME;
-                if (newCell.getState() == 1 || newCell.getState() == 2) firstLuckShot();
+    void firstLuckShot() {
+        if (checkCorner()) {
+            Random rnd = new Random();
+            int x = rnd.nextInt(2);
+            int y = rnd.nextInt(2);
+            if (x == 1) x = cellsCountX - 1;
+            if (y == 1) y = cellsCountY - 1;
+            Cell newCell = cells[x][y];
+            if (newCell.isHidden() & !newCell.isMarked()) {
+                System.out.println("Bot: Corner Luck Shot");
+                cellsToOpen.add(newCell);
+                if (newCell.getState() == 1 || newCell.getState() == 2) firstStep = true;
             } else firstLuckShot();
         }
     }
 
+    private boolean checkCorner() {
+        return cells[0][0].isHidden() ||
+                cells[0][cellsCountY - 1].isHidden() ||
+                cells[cellsCountX - 1][0].isHidden() ||
+                cells[cellsCountX - 1][cellsCountY - 1].isHidden();
+    }
+
     private void luckShot() {
         Random rnd = new Random();
-        int x = rnd.nextInt(SCREEN_WIDTH);
-        int y = rnd.nextInt(SCREEN_HEIGHT);
-        Cell localCell = GUI.getCells()[x / CELL_SIZE][y / CELL_SIZE];
+        int x = rnd.nextInt(cellsCountX);
+        int y = rnd.nextInt(cellsCountY);
+        Cell localCell = cells[x][y];
         if (!localCell.isMarked() && localCell.isHidden()) {
             System.out.println("Bot: Luck Shot");
-            GUI.receiveClick(x, y, BUTTON_OPEN);
-            timeBetweenMoves = WAIT_TIME;
+            cellsToOpen.add(localCell);
         }
     }
 
@@ -210,11 +192,7 @@ public class BotUseless {
             if (firstStep) {
                 firstLuckShot();
                 firstStep = false;
-            }
-            if (timeBetweenMoves >= 0) {
-                timeBetweenMoves -= Clock.INSTANCE.getDelta();
             } else {
-                stop = false;
                 noWay = true;
                 solved = true;
                 for (Cell[] line : cells) {
@@ -225,23 +203,86 @@ public class BotUseless {
                             ezOpen(cell);
                             if (noWay) findSafeCells(cell);
                         }
-                        if (stop) {
-                            timeBetweenMoves = WAIT_TIME;
-                            break;
-                        }
                         if (cell.isHidden() && !cell.isMarked()) {
                             solved = false;
                         }
+                        if (!noWay) {
+                            break;
+                        }
                     }
-                    if (stop) break;
+                    if (!noWay) break;
                 }
-                if (noWay) bestEverProbability();
-                if (noWay) {
-                    if (!solved) luckShot();
-                    else GUI.gameover();
-                }
+                if (noWay) if (checkCorner()) firstLuckShot();
+                else bestEverProbability();
+                if (noWay && !solved) luckShot();
             }
         }
+    }
+
+    public void clearCellLists() {
+        cellsToOpen.clear();
+        cellsToMark.clear();
+    }
+
+    private List<Cell> getNeighbours(Cell cell) {
+        int cell_x = cell.getXPosition();
+        int cell_y = cell.getYPosition();
+        List<Cell> localNeighbours = new ArrayList<Cell>();
+
+        for (int i = cell_x - 1; i <= cell_x + 1; i++)
+            for (int k = cell_y - 1; k <= cell_y + 1; k++) {
+                try {
+                    Cell localCell = cells[i][k];
+                    if (localCell.isHidden() && !(i == cell_x && k == cell_y))
+                        localNeighbours.add(localCell);
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                    //ignore
+                }
+            }
+        return localNeighbours;
+    }
+
+    private List<Cell> getNotMarkedNeighbours(Cell cell) {
+        int cell_x = cell.getXPosition();
+        int cell_y = cell.getYPosition();
+        List<Cell> localNeighbours = new ArrayList<Cell>();
+
+        for (int i = cell_x - 1; i <= cell_x + 1; i++)
+            for (int k = cell_y - 1; k <= cell_y + 1; k++) {
+                try {
+                    Cell localCell = cells[i][k];
+                    if (localCell.isHidden() && !localCell.isMarked() && !(i == cell_x && k == cell_y))
+                        localNeighbours.add(localCell);
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                    //ignore
+                }
+            }
+        return localNeighbours;
+    }
+
+    private List<Cell> getOpenNeighbours(Cell cell) {
+        int cell_x = cell.getXPosition();
+        int cell_y = cell.getYPosition();
+        List<Cell> localNeighbours = new ArrayList<Cell>();
+
+        for (int i = cell_x - 1; i <= cell_x + 1; i++)
+            for (int k = cell_y - 1; k <= cell_y + 1; k++) {
+                try {
+                    Cell localCell = cells[i][k];
+                    if (!localCell.isHidden() && !localCell.isMarked() && !(i == cell_x && k == cell_y))
+                        localNeighbours.add(localCell);
+                } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+                    //ignore
+                }
+            }
+        return localNeighbours;
+    }
+
+    private int getCurrentState(Cell cell) {
+        int currentState = cell.getState();
+        List<Cell> neighbours = getNeighbours(cell);
+        for (Cell localCell : neighbours) if (localCell.isMarked()) currentState--;
+        return currentState;
     }
 
     public boolean isWorking() {
@@ -252,7 +293,27 @@ public class BotUseless {
         this.working = working;
     }
 
-    public void setStop(boolean stop) {
-        this.stop = stop;
+    public void setFirstStep(boolean firstStep) {
+        this.firstStep = firstStep;
+    }
+
+    public boolean isNoWay() {
+        return noWay;
+    }
+
+    public void setNoWay(boolean noWay) {
+        this.noWay = noWay;
+    }
+
+    public boolean isSolved() {
+        return solved;
+    }
+
+    public Set<Cell> getCellsToOpen() {
+        return cellsToOpen;
+    }
+
+    public Set<Cell> getCellsToMark() {
+        return cellsToMark;
     }
 }

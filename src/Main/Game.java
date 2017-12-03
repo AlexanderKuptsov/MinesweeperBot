@@ -11,9 +11,15 @@ public enum Game {
 
     private BotUseless botUseless;
     private boolean end_of_game = false;
+    private float timeBetweenMoves;
+
+    private static final float WAIT_TIME = 0.0175f;
+    private static final int BUTTON_OPEN = 0;
+    private static final int BUTTON_SET_FLAG = 1;
 
     Game() {
         this.botUseless = new BotUseless(GUI.getCells());
+        this.timeBetweenMoves = WAIT_TIME;
     }
 
     //Если за последний такт произошли какие-то события с мышью, перебираем их по очереди
@@ -46,8 +52,18 @@ public enum Game {
 
     public void update() {
         input();
+
+        if (timeBetweenMoves >= 0) {
+            timeBetweenMoves -= Clock.INSTANCE.getDelta();
+        } else {
+            botUseless.update();
+            for (Cell cell : botUseless.getCellsToOpen()) GUI.receiveClick(cell.getX(), cell.getY(), BUTTON_OPEN);
+            for (Cell cell : botUseless.getCellsToMark()) GUI.receiveClick(cell.getX(), cell.getY(), BUTTON_SET_FLAG);
+            botUseless.clearCellLists();
+            timeBetweenMoves = WAIT_TIME;
+            if (botUseless.isNoWay() && botUseless.isSolved()) GUI.gameover();
+        }
         GUI.draw();
-        botUseless.update();
     }
 
     public boolean isEnd_of_game() {

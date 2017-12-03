@@ -12,9 +12,8 @@ import static org.lwjgl.opengl.GL11.*;
 public class GUI {
 
     private static Cell[][] cells;
-    // 15/15/48/15
-    public static final int CELLS_COUNT_X = 15;
-    public static final int CELLS_COUNT_Y = 15;
+    public static final int CELLS_COUNT_X = 14;
+    public static final int CELLS_COUNT_Y = 16;
     public static final int CELL_SIZE = 48;
     private static final int DIFFICULTY = 15;
     public static final int SCREEN_WIDTH = CELLS_COUNT_X * CELL_SIZE;
@@ -68,7 +67,7 @@ public class GUI {
         int cell_y = y / CELL_SIZE;
 
         int result = cells[cell_x][cell_y].receiveClick(button);
-
+        //System.out.println("Click (" + button + ") on [" + cell_x + "][" + cell_y + "]");
         if (result == 1) {
             ///Делаем вид, что тыкнули в клетки
             ///Сверху, снизу, справа и слева
@@ -121,7 +120,7 @@ public class GUI {
     public static void gameover() {
         Game.INSTANCE.setEnd_of_game(true);
         Game.INSTANCE.getBotUseless().setWorking(false);
-        Game.INSTANCE.getBotUseless().setStop(true);
+        Game.INSTANCE.getBotUseless().setNoWay(false);
         for (Cell[] line : cells) {
             for (Cell cell : line) {
                 cell.show();
